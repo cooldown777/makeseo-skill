@@ -4,6 +4,42 @@ All notable changes to the makeseo skill are recorded here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the skill version is
 the `version` field in `SKILL.md`'s frontmatter.
 
+## Definition of Done (every future feature)
+
+A feature is not done until **all** of these hold — this is what keeps the skill
+from drifting the way a 122 KB monolith does:
+
+1. **Command** — a file in `commands/` (1–4 KB) with `description` + `argument-hint`
+   frontmatter, a numbered flow, and a pointer to its reference. No methodology in
+   the command itself.
+2. **Reference** — the methodology lives in `references/` (its own file, or a
+   section of an existing one for a small feature). Cite exact endpoints.
+3. **Numbers** — every threshold is a key in `rules/seo-thresholds.json`; no number
+   is hard-coded in prose or code.
+4. **Grounded in the real API** — only the actual makeseo endpoints; no invented
+   features, and the agent never drafts article HTML (makeseo generates it).
+5. **Listed** — a row in the command table of both `SKILL.md` and `README.md`; the
+   two tables and the files in `commands/` agree.
+6. **Recorded** — an entry here, and the `version` in `SKILL.md`'s frontmatter bumped.
+7. **Scripts tested** — any `.mjs` runs clean (validator fixtures pass, a live read
+   returns), and any rule documented in a reference matches what a script enforces.
+8. **`SKILL.md` still < 20 KB** — if it grew past, move something into `references/`
+   in the same change.
+
+---
+
+## [0.2.1] — 2026-08-11
+
+### Fixed
+- `scripts/check-article-html.mjs` corrected against a **real generated makeseo article body**
+  (verified via a live API read): anchor ids live on `<section id>` wrappers (and `<h3 id>` /
+  step `<li id>`), **not** on the `<h2>`. The validator now collects ids from every element so
+  table-of-contents anchors resolve, and the false "missing H2 id" rule was dropped. makeseo's
+  images legitimately carry `width`/`height` + `loading` for layout stability, so the
+  "image-fixed-size" check was removed (the `alt`-text check stays). `references/article-structure.md`
+  updated to match. A real makeseo body now validates clean; the only `--domain` finding it draws is
+  the genuine "fewer than 3 internal links" advisory.
+
 ## [0.2.0] — 2026-08-11
 
 ### Added

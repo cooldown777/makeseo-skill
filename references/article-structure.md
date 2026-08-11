@@ -32,7 +32,8 @@ Tags → H1 → meta → feature image → intro (2 short paragraphs, one cited 
 - **Intro** = two short paragraphs with a hook and one cited statistic linked to its source — not
   "In today's fast-paced world…".
 - **Two-level table of contents** whenever the article has at least `min_h2_per_article` (2) H2s: it
-  lists each H2 and its H3s, each entry an in-page `#anchor` to the heading.
+  lists each H2 and its H3s, each entry an in-page `#anchor` to the `<section>` wrapper that heading
+  opens (makeseo anchors the section, not the `<h2>`).
 - **Each H2 section carries 2–3 H3s** — the two-level depth the TOC reflects.
 - **Step guide** = a prioritized, do-this-first list near the end. **FAQ** = 4–6 real questions, each
   answered in its first sentence in `faq_direct_answer_words` (40–60) words so AI engines can extract
@@ -77,16 +78,19 @@ these rules exactly. Document them here 1:1 — if you change one, change both.
    `background-color`; any hex colour (`#rrggbb`); and any CSS custom property `var(--…)`. Colour lives
    only in the stylesheet outside the fragment, never in `body_html`.
 
-3. **Unique, URL-safe H2 ids.** Every `<h2>` must have an `id` built only from
-   `A-Za-z0-9._~-`. Duplicate ids are flagged (they break the TOC and produce two targets for one anchor).
+3. **No duplicate ids.** Anchor ids live on `<section id>` wrappers, on `<h3 id>`, and on step
+   `<li id>` — **not on the `<h2>` itself** (makeseo wraps each section and puts the id on the
+   wrapper). The validator collects ids from *every* element; two elements sharing an id break the
+   jump link (two targets for one `#anchor`) and are flagged.
 
 4. **Two-level TOC integrity.** When the body has `>= min_h2_per_article` (2) H2s, a two-level TOC is
-   expected, and **every in-page `#anchor` must resolve to a real heading id**. A dangling anchor
-   (points at an id no heading carries) fails — a broken jump link is worse than no TOC.
+   expected, and **every in-page `#anchor` must resolve to some element id in the fragment** — the
+   section wrapper, a heading, or a step item. A dangling anchor (points at an id nothing carries)
+   fails — a broken jump link is worse than no TOC.
 
-5. **Images.** Every `<img>` needs non-empty `alt` text, and must **not** carry a fixed width or height —
-   neither as an attribute nor in a `style`. (Fixed dimensions break the responsive, uncropped image
-   blocks.)
+5. **Images.** Every `<img>` needs non-empty `alt` text. makeseo *does* set `width`/`height` and
+   `loading` on its images (correct markup for layout stability / no cumulative layout shift) — that
+   is expected, not a violation.
 
 6. **Internal links (with `--domain`).** The body needs `>= min_internal_links_per_article` (3) links
    to the project's own domain, spread at least `internal_link_min_paragraph_gap` (2) paragraphs apart.

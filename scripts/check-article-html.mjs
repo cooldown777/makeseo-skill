@@ -41,7 +41,6 @@ const FORBIDDEN_TAGS = new Set([
 const COLOUR_RE = /(^|;)\s*(color|background|background-color)\s*:/i;
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/;
 const VAR_RE = /var\(\s*--/i;
-const DIM_STYLE_RE = /(^|;)\s*(width|height)\s*:/i;
 
 function parseArgs(argv) {
   const args = { input: null, domain: null, competitors: "", metaTitle: null, metaDescription: null, thresholds: DEFAULT_THRESHOLDS };
@@ -72,7 +71,7 @@ function attrMap(raw) {
 function scan(html) {
   const tagRe = /<(\/?)([a-zA-Z!][-a-zA-Z0-9]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
   const state = {
-    violations: [], h2Ids: [], headingIds: new Set(), headings: [],
+    violations: [], h2Count: 0, ids: new Set(), dupeIds: new Set(),
     images: [], links: [], linkParas: [], para: 0,
   };
   let m;
@@ -94,20 +93,16 @@ function scan(html) {
       state.violations.push(`[${line}] colour-in-body: inline style '${style.trim()}' — the body is black-on-white; colour lives only in the stylesheet.`);
     }
 
-    if (tag === "h2" || tag === "h3") {
-      const hid = (attrs.id || "").trim();
-      state.headings.push([tag, hid]);
-      if (hid) state.headingIds.add(hid);
-      if (tag === "h2") state.h2Ids.push(hid);
+    // Anchor ids can sit on ANY element — makeseo puts them on <section id>
+    // wrappers, <h3 id>, and step <li id>, not on the <h2> itself.
+    const idAttr = (attrs.id || "").trim();
+    if (idAttr) {
+      if (state.ids.has(idAttr)) state.dupeIds.add(idAttr);
+      state.ids.add(idAttr);
     }
+    if (tag === "h2") state.h2Count += 1;
     if (tag === "p") state.para += 1;
-    if (tag === "img") {
-      state.images.push({
-        line,
-        alt: attrs.alt,
-        hasDim: "width" in attrs || "height" in attrs || DIM_STYLE_RE.test(style),
-      });
-    }
+    if (tag === "img") state.images.push({ line, alt: attrs.alt });
     if (tag === "a") {
       state.links.push({ line, href: (attrs.href || "").trim() });
       state.linkParas.push(state.para);
@@ -130,32 +125,26 @@ function validate(html, thresholds, domain, competitors) {
   const op = thresholds.onpage_mirrored || {};
   const an = thresholds.analysis_defaults || {};
 
-  // 1. Every H2 needs a stable, URL-safe id.
-  st.h2Ids.forEach((hid, i) => {
-    if (!hid) v.push(`[h2 #${i + 1}] missing-h2-id: an H2 has no id — the table of contents cannot link to it.`);
-    else if (!/^[A-Za-z0-9._~-]+$/.test(hid)) v.push(`missing-h2-id: id '${hid}' is not URL-safe.`);
-  });
-  const seen = new Set(), dupes = new Set();
-  for (const h of st.h2Ids) { if (h) { if (seen.has(h)) dupes.add(h); seen.add(h); } }
-  for (const d of dupes) v.push(`duplicate-h2-id: id '${d}' appears on more than one heading.`);
+  // 1. No duplicate ids — two targets for one #anchor breaks the jump link.
+  for (const d of st.dupeIds) v.push(`duplicate-id: id '${d}' appears on more than one element.`);
 
-  // 2. Two-level TOC when >= min_h2 sections; every in-page anchor must resolve.
+  // 2. Two-level TOC when >= min_h2 sections; every in-page anchor must resolve
+  //    to SOME element id in the fragment (section wrapper, heading, or step).
   const minH2 = (op.min_h2_per_article || {}).value ?? 2;
   for (const link of st.links) {
     if (link.href.startsWith("#")) {
       const frag = link.href.slice(1);
-      if (!st.headingIds.has(frag)) v.push(`[${link.line}] dangling-anchor: href '#${frag}' resolves to no heading id — a broken table-of-contents link.`);
+      if (!st.ids.has(frag)) v.push(`[${link.line}] dangling-anchor: href '#${frag}' resolves to no element id — a broken table-of-contents link.`);
     }
   }
-  if (st.h2Ids.length >= minH2) {
+  if (st.h2Count >= minH2) {
     const toc = st.links.filter((l) => l.href.startsWith("#"));
-    if (toc.length === 0) v.push(`missing-toc: ${st.h2Ids.length} H2 sections but no in-page anchor links — a two-level table of contents is expected.`);
+    if (toc.length === 0) v.push(`missing-toc: ${st.h2Count} H2 sections but no in-page anchor links — a two-level table of contents is expected.`);
   }
 
-  // 3. Images: alt text, no fixed pixel dimensions.
+  // 3. Images: alt text. (width/height attributes are correct CLS markup.)
   for (const img of st.images) {
     if (!(img.alt || "").trim()) v.push(`[${img.line}] image-no-alt: <img> without alt text.`);
-    if (img.hasDim) v.push(`[${img.line}] image-fixed-size: <img> carries a fixed width/height — sizing belongs to the stylesheet.`);
   }
 
   // 4. Links: no competitor domains; internal links distributed, not clustered.

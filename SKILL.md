@@ -2,7 +2,7 @@
 name: makeseo
 description: SEO automation for AI agents — real keyword volume, makeseo-generated articles, CMS publishing, a backlink exchange, topic-cluster planning, a technical site audit, Search Console analysis, and AI-visibility (GEO) tracking, all driven through the makeseo REST API with curl + jq. makeseo writes the article; you drive the process and publish.
 homepage: https://makeseo.co
-version: 0.2.0
+version: 0.2.1
 allowed-tools: Bash(curl, jq, node, cat), WebFetch, WebSearch, Read, Write
 ---
 
