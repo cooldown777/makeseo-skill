@@ -8,6 +8,9 @@ Unlike a write-it-yourself content tool, **makeseo writes the article for you** 
 topic, trigger generation, and publish. This skill is the agent-facing wrapper around the makeseo
 REST API.
 
+**→ [makeseo.co/skill](https://makeseo.co/skill)** — what it does, in 60 seconds, and a
+3-day free trial.
+
 ## Install
 Copy this folder into your agent's skills directory (for Claude Code: `~/.claude/skills/makeseo`
 or a project `.claude/skills/makeseo`). The commands in `commands/` register as slash commands.
