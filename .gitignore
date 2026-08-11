@@ -9,6 +9,9 @@ venv/
 .env.local
 *.key
 
+# Generated exports (news-topics --csv, etc.)
+*.csv
+
 # OS
 .DS_Store
 Thumbs.db

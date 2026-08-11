@@ -24,6 +24,10 @@ know search volume — so this command never invents one.
 3. **Sort and recommend.** Prioritize pillar keywords and measured, higher-volume, lower-
    difficulty terms with commercial/informational intent for the next `/write-article`.
 
+4. **Group into clusters, not a flat list.** Bucket the results by `cluster_id`/`is_pillar` before
+   handing them back — a pillar plus its supporting terms ranks; a loose keyword dump does not. See
+   `references/cluster-planning.md`, or run `/cluster-plan` to build the structure directly.
+
 Note: makeseo grows keywords through the planning pipeline; to add brand-new keyword ideas, the
 user does that in the dashboard ("Add keywords"). This command works with the project's existing
 keyword set.

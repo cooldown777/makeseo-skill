@@ -1,8 +1,9 @@
 ---
 name: makeseo
-description: SEO automation for AI agents — real keyword volume, article generation, CMS publishing, a backlink exchange, a technical site audit, and AI-visibility (GEO) tracking, all driven through the makeseo REST API with curl + jq.
+description: SEO automation for AI agents — real keyword volume, makeseo-generated articles, CMS publishing, a backlink exchange, topic-cluster planning, a technical site audit, Search Console analysis, and AI-visibility (GEO) tracking, all driven through the makeseo REST API with curl + jq. makeseo writes the article; you drive the process and publish.
 homepage: https://makeseo.co
-allowed-tools: Bash(curl, jq, cat), WebFetch, WebSearch, Read, Write
+version: 0.2.0
+allowed-tools: Bash(curl, jq, node, cat), WebFetch, WebSearch, Read, Write
 ---
 
 # makeseo SEO Platform Skill
@@ -48,14 +49,20 @@ curl -s -H "Authorization: Bearer $MAKESEO_API_KEY" \
   its SHA-256 hash. Lose it, make a new one.
 - A key is **org-scoped**: it sees every project in your account. (A key can optionally be
   bound to a single project.) Get project IDs from `GET /projects`.
-- Rate limit: **120 requests/min** per organization → HTTP 429 with `Retry-After`.
+- Rate limit: **120 requests/min** per organization → HTTP 429 with `Retry-After`. `POST
+  /keywords/refresh` has a second, tighter limit of **10 requests / 10 min** per org.
+- **Optional helpers** (Node 18+, dependency-free) live in `scripts/`: `makeseo.mjs` (a CLI
+  over every endpoint), `check-article-html.mjs` (validate a body against the house rules),
+  `news-topics.mjs` (fresh topics from Google News RSS). Every number the skill reasons with
+  is in `rules/seo-thresholds.json` — cite it, never hard-code a threshold.
 
 ## The proper SEO process (do it in this order)
 
 1. **`/makeseo-setup`** — validate the key, confirm a CMS target and Google Search Console.
 2. **`/gsc-audit`** — run/read the technical audit and Search Console data BEFORE writing.
    Fix what already ranks first; it's the fastest win.
-3. **`/keyword-research`** — pull the project's keywords with real volume; refresh if stale.
+3. **`/keyword-research`** → **`/cluster-plan`** — pull keywords with real volume (refresh if
+   stale), then group them into pillar + supporting clusters before writing anything.
 4. **`/content-calendar`** — see the rolling plan; makeseo already scheduled topics ahead.
 5. **`/write-article`** — generate a planned item now (makeseo writes it), then publish.
 6. **`/backlinks`** — feed the exchange: reference 1–2 network targets per article.
@@ -159,17 +166,21 @@ You don't write it, but know what you get so you can judge and optimize it:
 
 ## Error handling
 
-| Status | Meaning | Action |
+Every error body is `{ "error": "<code>", "message": "<hint>" }`. The `error` code is stable;
+match on it, not the (German) hint.
+
+| Status · `error` | Meaning | Action |
 |---|---|---|
-| `401 missing/invalid_api_key` | No/unknown key | Set `MAKESEO_API_KEY` in the environment; mint a new key in Settings |
-| `403 revoked_api_key` / `project_not_allowed` | Key revoked, or bound to another project | New key, or use the right project |
-| `402` on `POST /articles` | Inactive subscription or quota used up | Surface it; the account must have a live plan with remaining articles |
-| `409` on publish | Quality gate failed | The article stays a draft; review it in makeseo before retrying |
+| `401 missing_api_key` / `malformed_api_key` / `invalid_api_key` | No/unknown/garbled key | Set `MAKESEO_API_KEY` in the environment (not just locally); mint a new key in Settings |
+| `403 revoked_api_key` / `project_not_allowed` | Key revoked, or bound to another project | New key, or use the project the key is bound to |
+| `402 subscription_inactive` on `POST /articles` / publish | Subscription not live | Surface it; the account needs a live plan (`trialing`/`active`/`past_due` in grace) |
+| `402 quota_exceeded` on `POST /articles` | Monthly article quota used up | Surface it; wait for the next period or raise the article tier |
+| `409 quality_gate_failed` on publish | Pre-publish quality gate held it | The article stays a draft with a rule report; review in makeseo, don't force |
 | `400 no_target_connected` on publish | No CMS connected | Connect a target (`GET /integrations`), then retry |
-| `400 connection_id_required` on publish | Multiple targets | Pass a `connection_id` from `GET /integrations` |
-| `404 project_not_found` | Wrong project_id for this key | Re-check `GET /projects` |
-| `429` | Rate limit | Honor `Retry-After` |
-| `state: not_connected/reconnect` on `/search-console` | GSC not connected | Connect Google Search Console in makeseo, then retry |
+| `400 connection_id_required` on publish | Multiple targets | Pass a `connection_id` (the error body lists `targets`) |
+| `404 project_not_found` / `article_not_found` | Wrong id for this key | Re-check `GET /projects` / `GET /articles` |
+| `429` | Rate limit | Honor `Retry-After`; `/keywords/refresh` is capped at 10 / 10 min |
+| `state: not_connected` / `reconnect` on `/search-console` | GSC not connected | Connect Google Search Console in makeseo, then retry |
 
 ## Slash commands
 
@@ -178,20 +189,37 @@ You don't write it, but know what you get so you can judge and optimize it:
 | `/makeseo` | Overview + the 8-step SEO process |
 | `/makeseo-setup` | Validate the key, confirm a CMS target + GSC, list projects |
 | `/gsc-audit` | Full read: technical audit + Search Console + cannibalization/decay/striking-distance |
-| `/keyword-research` | Project keywords with real volume; refresh stale volume |
-| `/write-article` | Pick a planned topic → makeseo generates it → publish |
+| `/keyword-research` | Project keywords with real volume; refresh stale volume; group into clusters |
+| `/cluster-plan` | Group keywords into pillar + supporting clusters (`is_pillar`/`cluster_id`) |
+| `/write-article` | Pick a planned topic → makeseo generates it → validate → publish |
 | `/optimize` | Find page-2 pages via audit + GSC and refresh them |
 | `/backlinks` | Check credits, see earned/scheduled links, explain the exchange |
 | `/content-calendar` | List and understand the rolling content plan |
 | `/ai-visibility` | GEO score, per-engine citation state |
+| `/news` | Fresh, datable niche topics (Google News RSS) to feed the plan |
 | `/seo-check` | Point users at the free public audit tool (`makeseo.co/seo-check`) |
 | `/internal-links` | List the project's own URLs to cross-link |
 | `/publish` | Publish a ready article to a connected CMS |
 
-## References (internal docs)
+## References (load the one the task needs)
 
+- `references/article-structure.md` — what makeseo produces, the house rules
+  `check-article-html.mjs` enforces, and the safe-edit protocol for the PUT path
+- `references/audit-playbook.md` — the audit analyses, each with a threshold and an action
+- `references/gsc-playbook.md` — Search Console data traps + the finding→plan back-channel
+- `references/cluster-planning.md` — pillar + supporting clusters from `is_pillar`/`cluster_id`
 - `references/onboarding-guide.md` — what makeseo captures and why
 - `references/plans-and-backlinks.md` — plan, article/website upsells, backlink exchange
-- `references/audit-playbook.md` — how to run and read the audit
 - `references/platform-guide.md` — where things live in makeseo
-- `references/writing-guidelines.md` — how makeseo writes (so you can judge/optimize output)
+
+## Rules & scripts
+
+- `rules/seo-thresholds.json` — the single source of every number (on-page limits mirrored
+  from makeseo's knowledge base; analysis benchmarks as skill defaults). Cite a key, never
+  hard-code a threshold.
+- `scripts/makeseo.mjs` — Node CLI over every endpoint (`node scripts/makeseo.mjs <cmd>`).
+- `scripts/check-article-html.mjs` — validate an article body against the house rules (a gate).
+- `scripts/news-topics.mjs` — fresh dated topics from Google News RSS (no key).
+
+For the 90-day onboarding arc, the `90-day-seo-sprint/` sub-skill sequences these commands
+into a 13-week plan.

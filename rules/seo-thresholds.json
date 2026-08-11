@@ -1,0 +1,66 @@
+{
+  "$comment": "Single source of every number this skill reasons with. Two groups: (1) values MIRRORED from makeseo's own SEO knowledge base — do not diverge from the product; (2) analysis defaults the skill applies to raw Search Console / audit data (industry-standard, tune freely). Audit, optimize, write-article and the article validator (scripts/check-article-html.mjs) all read from here — never hard-code a number in prose or code.",
+  "version": "1.0.0",
+  "mirrors_compendium": "SEO-Kompendium – Vom Grundwissen zum Expertenniveau (11 Kapitel, Stand Aug 2026)",
+  "mirrors_knowledge_base": "seo-knowledge/makeseo-seo-knowledge-base.yaml",
+
+  "onpage_mirrored": {
+    "$comment": "Mirrored 1:1 from the makeseo knowledge base. rule_id is the stable identity in that file; a generated article is measured against these, and the pre-publish quality gate enforces the hard ones.",
+    "title_length_chars": { "min": 50, "max": 60, "rule_id": "onpage.title.length" },
+    "meta_description_length_chars": { "min": 120, "max": 155, "rule_id": "onpage.meta.length" },
+    "min_h2_per_article": { "value": 2, "rule_id": "onpage.heading.hierarchy" },
+    "single_h1": { "value": 1, "rule_id": "onpage.h1.single" },
+    "min_internal_links_per_article": { "value": 3, "distribute_across_body": true, "rule_id": "intlink.distribution" },
+    "faq_direct_answer_words": { "min": 40, "max": 60, "rule_id": "onpage.answer_first" },
+    "target_word_count": { "value": null, "rule_id": "onpage.no_target_wordcount", "$comment": "makeseo deliberately has NO fixed word-count target — length is derived from what the top results need, then a little beyond. Never assert a word count as a rule." },
+    "core_web_vitals": { "lcp_good_s": 2.5, "inp_good_ms": 200, "cls_good": 0.1, "rule_id": "tech.cwv" }
+  },
+
+  "analysis_defaults": {
+    "$comment": "Applied by the skill's audit/optimize analyses to raw GSC + audit data. Not makeseo product rules — industry benchmarks. Positions are 1-indexed SERP positions.",
+
+    "expected_ctr_by_position": {
+      "$comment": "Rough organic CTR benchmark used only to FLAG under-performing pages, never to promise traffic. Positions beyond 10 assume page 2+.",
+      "1": 0.28, "2": 0.15, "3": 0.10, "4": 0.07, "5": 0.05,
+      "6": 0.04, "7": 0.03, "8": 0.025, "9": 0.02, "10": 0.018,
+      "11_20": 0.01, "21_plus": 0.003
+    },
+    "ctr_gap_flag_factor": 0.7,
+    "ctr_gap_min_impressions": 100,
+
+    "striking_distance": {
+      "position_min": 8,
+      "position_max": 20,
+      "min_impressions": 50,
+      "$comment": "Pages in this band already have authority; a meta + internal-link refresh climbs them fastest — the best ROI in an audit."
+    },
+
+    "content_decay": {
+      "clicks_drop_pct_flag": 30,
+      "min_prior_clicks": 20,
+      "$comment": "Flag a page whose clicks fell >= this percent vs the previous equal period. A point-in-time snapshot is NOT a trend — require a real prior period and say so."
+    },
+
+    "brand_share_bands": {
+      "healthy_min_pct": 60,
+      "moderate_min_pct": 40,
+      "$comment": ">= healthy: non-brand demand is strong. 40–60: moderate. < moderate: traffic is brand-dependent — invest in non-brand content."
+    },
+
+    "cannibalization": {
+      "min_pages_per_query": 2,
+      "min_impressions": 30,
+      "$comment": "Two ways to detect: group the project's own articles by target keyword, AND read GSC for one query served by multiple pages. Mirrors makeseo rule cannibalization.rules."
+    },
+
+    "cluster": {
+      "min_supporting_articles": 4,
+      "max_supporting_articles": 8,
+      "one_url_per_cluster": true,
+      "$comment": "A pillar + 4–8 supporting articles, exactly one URL owning each cluster's head term. Mirrors makeseo rules cluster.one_url_per_cluster / cluster.completeness."
+    },
+
+    "internal_link_min_paragraph_gap": 2,
+    "dead_page_max_clicks": 0
+  }
+}

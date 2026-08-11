@@ -30,7 +30,17 @@ publish. Never paste your own HTML; there is no content-submission endpoint.
 4. **Review** — `GET /articles/:id` to read `title`, `meta_*`, `body_html`, `score`. Optionally
    tune metadata with `PUT /articles/:id` (`meta_title`, `meta_description`, `tags`).
 
-5. **Publish** — see `/publish`, or:
+5. **Readiness gate** — save `body_html` to a file and validate it before publishing:
+   ```bash
+   node scripts/check-article-html.mjs body.html --domain "$DOMAIN" \
+     --competitors "rivalA.com,rivalB.com" \
+     --meta-title "$META_TITLE" --meta-description "$META_DESC"
+   ```
+   Exit 0 = clean, 1 = violations, 2 = I/O. Fix metadata via `PUT /articles/:id` and re-check
+   until clean; the body itself is edited in the dashboard, not the API. Thresholds and the house
+   structure behind each check live in `references/article-structure.md`.
+
+6. **Publish** — see `/publish`, or:
    ```bash
    curl -s -X POST -H "Authorization: Bearer $MAKESEO_API_KEY" -H "Content-Type: application/json" \
      -d '{}' https://makeseo.co/api/v1/articles/$ARTICLE_ID/publish | jq .

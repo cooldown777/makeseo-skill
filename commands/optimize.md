@@ -15,6 +15,9 @@ queue — you combine two reads and act.
    - **Striking distance**: `topQueries`/`topPages` at position 8–20.
    - **Low CTR**: high impressions, weak CTR → the title/meta is the lever.
    - **Decay**: negative deltas vs the previous period.
+   The exact bands (striking-distance window, CTR-gap factor, decay flag, cannibalization) come
+   from `rules/seo-thresholds.json` — never hard-code them. Full method: `references/gsc-playbook.md`.
+   For reading and prioritizing on-page audit issues: `references/audit-playbook.md`.
 
 3. **Act, ranked by impact.**
    - Quick metadata wins: `PUT /articles/:id` to sharpen `meta_title` / `meta_description`, then
