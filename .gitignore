@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Env / secrets — never commit an API key
+.env
+.env.local
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
