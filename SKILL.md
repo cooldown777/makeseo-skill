@@ -2,7 +2,7 @@
 name: makeseo
 description: SEO automation for AI agents — real keyword volume, makeseo-generated articles, CMS publishing, a backlink exchange, topic-cluster planning, a technical site audit, Search Console analysis, and AI-visibility (GEO) tracking, all driven through the makeseo REST API with curl + jq. makeseo writes the article; you drive the process and publish.
 homepage: https://makeseo.co
-version: 0.2.1
+version: 0.2.2
 allowed-tools: Bash(curl, jq, node, cat), WebFetch, WebSearch, Read, Write
 ---
 
@@ -78,7 +78,7 @@ curl -s -H "Authorization: Bearer $MAKESEO_API_KEY" \
 | `PUT /projects/:id` | Update basics + profile (name, domain, language, niche, description, audiences, brand_voice) |
 | `GET /business-context?project_id=X` | Brand voice + the structured website analysis (use before generating) |
 | `GET /keywords?project_id=X` | Project keywords with **measured** volume (estimates never shown as numbers) |
-| `POST /keywords/refresh` `{project_id}` | Pull fresh Google Ads volume (the only allowed user trigger) |
+| `POST /keywords/refresh?project_id=X` | Pull fresh Google Ads volume (the only allowed user trigger; `project_id` goes in the query, not the body) |
 | `GET /search-console?project_id=X&days=28` | Real GSC: clicks, impressions, CTR, position by query/page |
 | `GET /audit?project_id=X` | Latest technical audit: score, history, issues bound to rule IDs |
 | `GET /internal-links?project_id=X&keyword=Y` | The project's own published URLs to cross-link |

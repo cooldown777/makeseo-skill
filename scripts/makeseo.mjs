@@ -136,7 +136,9 @@ async function main() {
     case "project": return emit(await request("GET", `/projects/${P()}`));
     case "business-context": return emit(await request("GET", "/business-context", { params: { project_id: P() } }));
     case "keywords": return emit(await request("GET", "/keywords", { params: { project_id: P() } }));
-    case "keywords-refresh": return emit(await request("POST", "/keywords/refresh", { body: { project_id: P() } }));
+    // project_id goes in the QUERY string: this route resolves it via resolveProject
+    // (route param -> ?project_id= -> key binding), it does NOT read the POST body.
+    case "keywords-refresh": return emit(await request("POST", "/keywords/refresh", { params: { project_id: P() } }));
     case "search-console": return emit(await request("GET", "/search-console", { params: { project_id: P(), days: flags.days } }));
     case "audit": return emit(await request("GET", "/audit", { params: { project_id: P() } }));
     case "articles": return emit(await request("GET", "/articles", { params: { project_id: P() } }));

@@ -28,6 +28,22 @@ from drifting the way a 122 KB monolith does:
 
 ---
 
+## [0.2.2] — 2026-08-11
+
+### Fixed
+- `scripts/makeseo.mjs` `keywords-refresh` sent `project_id` in the POST **body**, but the
+  route resolves it from the **query string** (`resolveProject`), so every refresh returned
+  `400 missing_project_id`. Now sent as `?project_id=`. Found by running the full function
+  matrix against the live API. `SKILL.md` endpoint notation corrected to match.
+
+### Verified
+- Full end-to-end test against live makeseo.co (project noperson.tech): all 15 read/write
+  endpoints, both metadata PUTs (round-tripped, no data change), and the two gated writes
+  (`generate`/`publish` correctly return `402 subscription_inactive`), plus both scripts —
+  **19/19 skill functions pass**. Caveats that are environment, not skill: Google Ads volume
+  provider unreachable in prod (refresh degrades to "not available" as designed), and GSC
+  unconnected on the test project (`state: not_connected`).
+
 ## [0.2.1] — 2026-08-11
 
 ### Fixed
