@@ -9,7 +9,15 @@ Unlike a write-it-yourself content tool, **makeseo writes the article for you** 
 topic, trigger generation, judge and optimize the result, and publish. This skill is the
 agent-facing wrapper around the makeseo REST API.
 
-**→ [makeseo.co/skill](https://makeseo.co/skill)** — what it does in 60 seconds, and a 3-day trial.
+**→ [makeseo.co/skill](https://makeseo.co/skill)** — what it does in 60 seconds.
+
+> **No makeseo account?** Start with the free
+> [Claude SEO skill](https://makeseo.co/free/claude-seo-skill) — one keyword in, one complete
+> SEO article out, built on the same rulebook. More free tools:
+> [SEO audit](https://makeseo.co/free/seo-audit) ·
+> [competitor report](https://makeseo.co/free/competitor-report) ·
+> [30-day content calendar](https://makeseo.co/free/content-calendar) ·
+> [SEO checklist](https://makeseo.co/free/seo-checklist).
 
 ## Install
 
